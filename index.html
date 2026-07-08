@@ -3,30 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>On Air Fitness — Saint-Denis</title>
+<title>Suivi On Air Réunion</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap');
 
   :root{
-    --bg:#141419;
-    --surface:#1D1D24;
-    --card:#25252E;
-    --card-hover:#2E2E38;
-    --chalk:#F3F1EA;
-    --muted:#8B8B96;
-    --line: rgba(243,241,234,0.08);
-    --line-strong: rgba(243,241,234,0.18);
+    --bg:#0A0A0A;
+    --surface:#161616;
+    --card:#1E1E1E;
+    --card-hover:#272727;
+    --chalk:#F5F3EE;
+    --muted:#8C8C8C;
+    --line: rgba(245,243,238,0.07);
+    --line-strong: rgba(245,243,238,0.16);
 
     --todo:#7C8BA3;
-    --doing:#FF5A2E;
-    --done:#C6FF3D;
-    --late:#FF3D3D;
+    --doing:#E3131F;
+    --done:#8FD14F;
+    --late:#E3131F;
     --soon:#F2C94C;
 
     --urg-basse:#7C8BA3;
     --urg-moyenne:#F2C94C;
-    --urg-haute:#FF3D3D;
+    --urg-haute:#E3131F;
 
     --radius:10px;
     --sidebar-w:250px;
@@ -43,11 +43,17 @@
     width:var(--sidebar-w);flex-shrink:0;background:var(--surface);
     border-right:1px solid var(--line);padding:26px 18px;position:sticky;top:0;
     height:100vh;overflow-y:auto;display:flex;flex-direction:column;
+    background-image:
+      linear-gradient(var(--surface), var(--surface)),
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 22px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 44px);
+    background-blend-mode:normal;
   }
-  .brand{margin-bottom:30px;}
+  .brand{margin-bottom:30px;display:flex;align-items:center;gap:12px;}
+  .brand-logo{width:40px;height:40px;flex-shrink:0;border-radius:8px;}
   .brand-eyebrow{font-size:11px;color:var(--doing);text-transform:uppercase;letter-spacing:0.14em;font-weight:600;margin:0 0 4px;}
-  .brand-title{font-family:'Anton',sans-serif;font-size:26px;text-transform:uppercase;line-height:1.05;margin:0;}
-  .brand-title span{color:var(--done);}
+  .brand-title{font-family:'Anton',sans-serif;font-size:24px;text-transform:uppercase;line-height:1.05;margin:0;}
+  .brand-title span{color:var(--doing);}
 
   .nav-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;font-weight:600;margin:0 0 10px;padding:0 4px;}
   .nav{display:flex;flex-direction:column;gap:2px;}
@@ -97,11 +103,70 @@
   .panel h2{font-size:15px;margin:0 0 10px;}
   .panel p{font-size:13px;color:var(--muted);line-height:1.7;margin:0 0 14px;}
   .panel ul{margin:0;padding-left:18px;color:var(--muted);font-size:13px;line-height:1.9;}
-  .badge{display:inline-block;font-size:11px;color:var(--doing);background:rgba(255,90,46,0.1);border:1px solid var(--doing);border-radius:20px;padding:3px 10px;margin-bottom:14px;font-weight:600;}
+  .badge{display:inline-block;font-size:11px;color:var(--doing);background:rgba(227,19,31,0.1);border:1px solid var(--doing);border-radius:20px;padding:3px 10px;margin-bottom:14px;font-weight:600;}
+
+  /* ---------- CLUB SWITCH ---------- */
+  .club-switch{display:flex;gap:8px;margin-bottom:28px;}
+  .club-btn{
+    background:var(--surface);border:1px solid var(--line-strong);color:var(--muted);
+    border-radius:8px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;
+    font-family:inherit;letter-spacing:0.02em;
+  }
+  .club-btn.active{background:var(--doing);color:#fff;border-color:var(--doing);}
+  .club-btn:hover:not(.active){color:var(--chalk);border-color:var(--chalk);}
+
+  /* ---------- DEVIS ---------- */
+  .devis-toolbar{margin-bottom:18px;}
+  .devis-add-btn{max-width:240px;margin-top:0;}
+  .devis-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
+  .devis-card{
+    background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--late);
+    border-radius:10px;padding:16px;
+  }
+  .devis-card.signe{border-left-color:var(--done);}
+  .devis-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px;}
+  .devis-title{font-size:15px;font-weight:600;margin:0;}
+  .devis-status{font-size:10px;text-transform:uppercase;letter-spacing:0.06em;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;}
+  .devis-status.a-valider{background:rgba(227,19,31,0.15);color:var(--late);}
+  .devis-status.signe{background:rgba(143,209,79,0.15);color:var(--done);}
+  .devis-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+  .devis-desc{font-size:12.5px;color:var(--muted);line-height:1.6;margin:0 0 12px;}
+  .devis-file-link{font-size:12px;color:var(--chalk);text-decoration:underline;display:inline-block;margin-bottom:10px;}
+  .devis-signed-info{font-size:11.5px;color:var(--muted);margin-bottom:10px;}
+  .devis-signed-info b{color:var(--chalk);}
+  .devis-sig-preview{max-width:140px;max-height:60px;display:block;background:#fff;border-radius:4px;padding:4px;margin-bottom:10px;}
+  .devis-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .devis-actions button, .devis-actions a{
+    font-size:12px;padding:7px 12px;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600;
+    border:1px solid var(--line-strong);background:var(--card);color:var(--chalk);text-decoration:none;display:inline-block;
+  }
+  .devis-actions .sign-btn{background:var(--doing);border-color:var(--doing);color:#fff;}
+  .devis-actions .download-btn{background:var(--done);border-color:var(--done);color:#0A0A0A;}
+  .devis-actions .delete-btn:hover{color:var(--late);border-color:var(--late);}
+  .devis-empty{font-size:13px;color:var(--muted);text-align:center;padding:30px;border:1px dashed var(--line);border-radius:10px;}
+
+  .devis-form{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:18px;display:flex;flex-direction:column;gap:8px;max-width:520px;}
+  .devis-form input, .devis-form select, .devis-form textarea{
+    background:var(--card);border:1px solid var(--line);color:var(--chalk);border-radius:6px;
+    padding:8px 9px;font-size:13px;font-family:inherit;outline:none;width:100%;resize:vertical;
+  }
+
+  /* signature modal */
+  .sig-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;
+    z-index:9999;padding:20px;
+  }
+  .sig-modal{background:var(--surface);border:1px solid var(--line-strong);border-radius:12px;padding:22px;max-width:420px;width:100%;}
+  .sig-modal h3{margin:0 0 4px;font-size:16px;}
+  .sig-modal p{margin:0 0 14px;font-size:12.5px;color:var(--muted);}
+  .sig-canvas{background:#fff;border-radius:8px;width:100%;height:160px;touch-action:none;cursor:crosshair;display:block;}
+  .sig-row{display:flex;gap:8px;margin-top:10px;}
+  .sig-row button{flex:1;border-radius:6px;padding:8px;font-size:12px;cursor:pointer;border:1px solid var(--line-strong);background:var(--card);color:var(--chalk);font-family:inherit;font-weight:500;}
+  .sig-row button.primary{background:var(--done);color:#0A0A0A;border-color:var(--done);font-weight:700;}
 
   /* ---------- ACCUEIL ---------- */
   .home-hero h1{font-family:'Anton',sans-serif;font-size:clamp(34px,6vw,52px);text-transform:uppercase;line-height:1.03;margin:0 0 6px;}
-  .home-hero h1 span{color:var(--done);}
+  .home-hero h1 span{color:var(--doing);}
   .home-hero p{font-size:14px;color:var(--muted);max-width:520px;line-height:1.7;margin:14px 0 32px;}
   .home-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;}
   .home-card{
@@ -220,33 +285,40 @@
 <div class="app">
   <aside class="sidebar">
     <div class="brand">
-      <p class="brand-eyebrow">Espace interne</p>
-      <p class="brand-title">On Air<br>Fitness <span>Saint-Denis</span></p>
+      <img class="brand-logo" src="https://onair-fitness.fr/wp-content/uploads/2020/10/cropped-PICTO-OA-R-270x270.png" alt="On Air Fitness">
+      <div>
+        <p class="brand-eyebrow">Espace interne</p>
+        <p class="brand-title">Suivi On<br>Air <span>Réunion</span></p>
+      </div>
     </div>
     <p class="nav-label">Sous-catégories</p>
     <nav class="nav" id="mainNav">
       <button class="nav-btn active" data-view="accueil"><span class="nav-num">•</span>Accueil</button>
       <button class="nav-btn" data-view="travaux"><span class="nav-num">01</span>Travaux en cours</button>
       <button class="nav-btn" data-view="ventes"><span class="nav-num">02</span>Ventes du club</button>
-      <button class="nav-btn" data-view="finance"><span class="nav-num">03</span>Finance</button>
+      <button class="nav-btn" data-view="devis"><span class="nav-num">03</span>Devis à valider</button>
       <button class="nav-btn" data-view="reporting"><span class="nav-num">04</span>Reporting hebdo</button>
       <button class="nav-btn" data-view="visites"><span class="nav-num">05</span>Visites mystères</button>
     </nav>
-    <div class="sidebar-footer">On Air Fitness — Saint-Denis · Réunion</div>
+    <div class="sidebar-footer">On Air Fitness — Saint-Denis · Saint-Pierre</div>
   </aside>
 
   <main class="content">
+    <div class="club-switch" id="clubSwitch">
+      <button class="club-btn active" data-club="Saint-Denis">Saint-Denis</button>
+      <button class="club-btn" data-club="Saint-Pierre">Saint-Pierre</button>
+    </div>
 
     <!-- ================= ACCUEIL ================= -->
     <section id="view-accueil" class="view active">
       <div class="home-hero">
-        <h1>On Air Fitness<br><span>Saint-Denis</span></h1>
-        <p>Tableau de bord du club : suivi des travaux, des ventes, de la finance, du reporting hebdomadaire et des visites mystères, réunis au même endroit pour toute l'équipe.</p>
+        <h1>Suivi On Air<br><span>Réunion</span></h1>
+        <p>Tableau de bord des clubs Saint-Denis et Saint-Pierre : suivi des travaux, des ventes, des devis à valider, du reporting hebdomadaire et des visites mystères, réunis au même endroit pour toute l'équipe.</p>
       </div>
       <div class="home-grid" id="homeGrid">
         <div class="home-card" data-view="travaux"><p class="home-card-num">01</p><p class="home-card-title">Travaux en cours</p><p class="home-card-desc">Suivi des tâches par espace, urgence, deadline et responsables.</p></div>
         <div class="home-card" data-view="ventes"><p class="home-card-num">02</p><p class="home-card-title">Ventes du club</p><p class="home-card-desc">Abonnements, ventes additionnelles et objectifs commerciaux.</p></div>
-        <div class="home-card" data-view="finance"><p class="home-card-num">03</p><p class="home-card-title">Finance</p><p class="home-card-desc">Chiffres clés, charges et trésorerie du club.</p></div>
+        <div class="home-card" data-view="devis"><p class="home-card-num">03</p><p class="home-card-title">Devis à valider</p><p class="home-card-desc">Validation et signature des devis par la direction.</p></div>
         <div class="home-card" data-view="reporting"><p class="home-card-num">04</p><p class="home-card-title">Reporting hebdomadaire</p><p class="home-card-desc">Synthèse de la semaine et points d'équipe.</p></div>
         <div class="home-card" data-view="visites"><p class="home-card-num">05</p><p class="home-card-title">Visites mystères</p><p class="home-card-desc">Résultats et grilles d'évaluation client mystère.</p></div>
       </div>
@@ -311,7 +383,7 @@
 
     <!-- ================= VENTES ================= -->
     <section id="view-ventes" class="view">
-      <p class="page-eyebrow">On Air Fitness — Saint-Denis</p>
+      <p class="page-eyebrow">On Air Fitness — Réunion</p>
       <h1 class="page-title">Ventes du club</h1>
       <p class="page-lead">Suivi des abonnements, ventes additionnelles (coaching, boutique, produits) et objectifs commerciaux de l'équipe.</p>
       <div class="kpis">
@@ -333,33 +405,23 @@
       </div>
     </section>
 
-    <!-- ================= FINANCE ================= -->
-    <section id="view-finance" class="view">
-      <p class="page-eyebrow">On Air Fitness — Saint-Denis</p>
-      <h1 class="page-title">Finance</h1>
-      <p class="page-lead">Chiffres clés, charges et trésorerie du club.</p>
-      <div class="kpis">
-        <div class="kpi"><p class="kpi-label">Chiffre d'affaires</p><p class="kpi-val">—</p></div>
-        <div class="kpi"><p class="kpi-label">Charges fixes</p><p class="kpi-val">—</p></div>
-        <div class="kpi"><p class="kpi-label">Trésorerie</p><p class="kpi-val">—</p></div>
-        <div class="kpi"><p class="kpi-label">Résultat du mois</p><p class="kpi-val">—</p></div>
+    <!-- ================= DEVIS A VALIDER ================= -->
+    <section id="view-devis" class="view">
+      <p class="page-eyebrow">On Air Fitness — Réunion</p>
+      <h1 class="page-title">Devis à valider</h1>
+      <p class="page-lead">Dépose un devis, la direction le signe directement ici. Une fois signé, le devis passe au vert et devient téléchargeable avec la signature.</p>
+
+      <div class="devis-toolbar">
+        <button class="add-btn devis-add-btn" id="addDevisBtn">+ Ajouter un devis</button>
       </div>
-      <div class="panel">
-        <span class="badge">Page à compléter</span>
-        <h2>Ce que cette page pourra suivre</h2>
-        <p>Précise-moi ce que tu veux suivre exactement et je construis les tableaux ou graphiques adaptés.</p>
-        <ul>
-          <li>Chiffre d'affaires par mois, par activité (abonnements, coaching, boutique)</li>
-          <li>Charges fixes et variables (loyer, salaires, maintenance, énergie...)</li>
-          <li>Suivi de trésorerie et d'échéances (fournisseurs, prêts)</li>
-          <li>Comparaison budget prévisionnel vs réalisé</li>
-        </ul>
-      </div>
+
+      <div class="devis-list" id="devisList"></div>
+      <div class="status-msg" id="devisStatusMsg"></div>
     </section>
 
     <!-- ================= REPORTING ================= -->
     <section id="view-reporting" class="view">
-      <p class="page-eyebrow">On Air Fitness — Saint-Denis</p>
+      <p class="page-eyebrow">On Air Fitness — Réunion</p>
       <h1 class="page-title">Reporting hebdomadaire</h1>
       <p class="page-lead">Synthèse de la semaine : activité du club, incidents, points d'équipe et suivi des actions.</p>
       <div class="panel">
@@ -377,7 +439,7 @@
 
     <!-- ================= VISITES MYSTERES ================= -->
     <section id="view-visites" class="view">
-      <p class="page-eyebrow">On Air Fitness — Saint-Denis</p>
+      <p class="page-eyebrow">On Air Fitness — Réunion</p>
       <h1 class="page-title">Visites mystères</h1>
       <p class="page-lead">Résultats et grilles d'évaluation des passages en client mystère.</p>
       <div class="kpis">
@@ -419,6 +481,18 @@
   document.querySelectorAll('.home-card').forEach(function(card){
     card.addEventListener('click', function(){ switchView(card.dataset.view); });
   });
+
+  /* ---------- CLUB SWITCH (global, partagé par toutes les pages) ---------- */
+  window.currentClub = 'Saint-Denis';
+  document.querySelectorAll('.club-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      window.currentClub = btn.dataset.club;
+      document.querySelectorAll('.club-btn').forEach(function(b){
+        b.classList.toggle('active', b === btn);
+      });
+      document.dispatchEvent(new CustomEvent('clubchange', { detail: window.currentClub }));
+    });
+  });
 </script>
 
 <script>
@@ -435,6 +509,8 @@
   if(supabaseReady){
     sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   }
+  window.sb = sb;
+  window.supabaseReady = supabaseReady;
   /* ================================================================== */
 
   var STATUSES = ['todo','doing','done'];
@@ -491,6 +567,7 @@
     if(!t.history) t.history = [];
     if(t.photo === undefined) t.photo = '';
     if(t.lastReminderSent === undefined) t.lastReminderSent = '';
+    if(!t.club) t.club = 'Saint-Denis';
   }
 
   function formOpen(){
@@ -574,12 +651,15 @@
 
   function getFilteredTasks(){
     return tasks.filter(function(t){
+      if((t.club || 'Saint-Denis') !== window.currentClub) return false;
       if(filters.espace && t.espace !== filters.espace) return false;
       if(filters.assignee && (t.assignees || []).indexOf(filters.assignee) === -1) return false;
       if(filters.priority && t.priority !== filters.priority) return false;
       return true;
     });
   }
+
+  document.addEventListener('clubchange', function(){ render(); });
 
   function render(){
     var visible = getFilteredTasks();
@@ -844,10 +924,20 @@
     });
   }
 
+  function clubOptionsHtml(selected){
+    var sel = selected || window.currentClub;
+    return ['Saint-Denis','Saint-Pierre'].map(function(c){
+      return '<option value="' + c + '"' + (c === sel ? ' selected' : '') + '">' + c + '</option>';
+    }).join('');
+  }
+
   function formFieldsHtml(task){
     var t = task || {};
     var assigneesStr = (t.assignees || []).join(', ');
-    return '<div class="field"><label>Tâche</label><input type="text" placeholder="Nom de la tâche" maxlength="120" class="f-title" value="' + (t.title ? t.title.replace(/"/g,'&quot;') : '') + '"></div>' +
+    return '<div class="form-row">' +
+        '<div class="field"><label>Tâche</label><input type="text" placeholder="Nom de la tâche" maxlength="120" class="f-title" value="' + (t.title ? t.title.replace(/"/g,'&quot;') : '') + '"></div>' +
+        '<div class="field"><label>Club</label><select class="f-club">' + clubOptionsHtml(t.club) + '</select></div>' +
+      '</div>' +
       '<div class="form-row">' +
         '<div class="field"><label>Espace concerné</label><select class="f-espace">' + espaceOptionsHtml(t.espace) + '</select></div>' +
         '<div class="field"><label>Responsables (séparés par une virgule)</label><input type="text" placeholder="Marie, Paul" maxlength="80" class="f-assignees" value="' + assigneesStr.replace(/"/g,'&quot;') + '"></div>' +
@@ -915,7 +1005,7 @@
       var titleVal = titleInput.value.trim();
       if(!titleVal){ titleInput.focus(); return; }
       var newTask = {
-        id: uid(), title: titleVal, espace: form.querySelector('.f-espace').value,
+        id: uid(), title: titleVal, club: form.querySelector('.f-club').value, espace: form.querySelector('.f-espace').value,
         assignees: parseAssignees(form.querySelector('.f-assignees').value),
         date: dateInput.value || todayISO(), intervention: form.querySelector('.f-intervention').value,
         deadline: form.querySelector('.f-deadline').value, priority: form.querySelector('.f-priority').value,
@@ -948,6 +1038,7 @@
       if(!titleVal){ titleInput.focus(); return; }
       var changes = [];
       var newTitle = titleVal;
+      var newClub = form.querySelector('.f-club').value;
       var newEspace = form.querySelector('.f-espace').value;
       var newAssignees = parseAssignees(form.querySelector('.f-assignees').value);
       var newDate = form.querySelector('.f-date').value || task.date;
@@ -959,6 +1050,7 @@
       var newPhoto = getPhoto();
 
       if(newTitle !== task.title) changes.push('titre');
+      if(newClub !== task.club) changes.push('club');
       if(newEspace !== task.espace) changes.push('espace');
       if(newAssignees.join(',') !== (task.assignees||[]).join(',')) changes.push('responsables');
       if(newDeadline !== task.deadline) changes.push('deadline');
@@ -968,7 +1060,7 @@
       if(newComment !== task.comment) changes.push('commentaire');
       if(newPhoto !== task.photo) changes.push('photo');
 
-      task.title = newTitle; task.espace = newEspace; task.assignees = newAssignees;
+      task.title = newTitle; task.club = newClub; task.espace = newEspace; task.assignees = newAssignees;
       task.date = newDate; task.intervention = newIntervention; task.deadline = newDeadline;
       task.priority = newPriority; task.recurrence = newRecurrence; task.comment = newComment; task.photo = newPhoto;
 
@@ -990,10 +1082,10 @@
   });
 
   document.getElementById('exportCsv').addEventListener('click', function(){
-    var rows = [['Tâche','Espace','Responsables','Statut','Urgence','Récurrence','Date saisie','Date intervention','Deadline','Commentaire']];
+    var rows = [['Club','Tâche','Espace','Responsables','Statut','Urgence','Récurrence','Date saisie','Date intervention','Deadline','Commentaire']];
     getFilteredTasks().forEach(function(t){
       rows.push([
-        t.title || '', t.espace || '', (t.assignees||[]).join(' / '), STATUS_LABELS[t.status] || '',
+        t.club || 'Saint-Denis', t.title || '', t.espace || '', (t.assignees||[]).join(' / '), STATUS_LABELS[t.status] || '',
         URG_LABELS[t.priority] || '', RECUR_LABELS[t.recurrence] || 'Aucune',
         fmtDate(t.date), fmtDate(t.intervention), fmtDate(t.deadline), (t.comment || '').replace(/\n/g,' ')
       ]);
@@ -1046,6 +1138,329 @@
   });
 
   loadData();
+})();
+</script>
+
+<script>
+(function(){
+  if(typeof window.supabaseReady === 'undefined') return;
+  var sb = window.sb;
+  var supabaseReady = window.supabaseReady;
+
+  var devisList = [];
+  var listEl = document.getElementById('devisList');
+  var statusEl = document.getElementById('devisStatusMsg');
+
+  function setDevisStatus(text, isError){
+    statusEl.textContent = text;
+    statusEl.style.color = isError ? 'var(--late)' : 'var(--muted)';
+  }
+
+  function uidDevis(){ return 'd' + Date.now() + Math.random().toString(16).slice(2,7); }
+  function todayISODevis(){ return new Date().toISOString().slice(0,10); }
+  function fmtDateDevis(iso){
+    if(!iso) return '';
+    var p = iso.split('-');
+    return p.length === 3 ? (p[2]+'/'+p[1]+'/'+p[0]) : iso;
+  }
+
+  async function fetchDevis(){
+    if(!supabaseReady){ setDevisStatus('Configuration Supabase manquante.', true); return; }
+    try{
+      var res = await sb.from('app_data').select('value').eq('key','devis').maybeSingle();
+      if(res.error) throw res.error;
+      devisList = (res.data && res.data.value) ? JSON.parse(res.data.value) : [];
+      renderDevis();
+      setDevisStatus('Synchronisé · ' + new Date().toLocaleTimeString('fr-FR'));
+    }catch(e){
+      setDevisStatus('Connexion impossible : ' + (e.message || e), true);
+    }
+  }
+
+  async function saveDevis(){
+    if(!supabaseReady) return;
+    try{
+      var res = await sb.from('app_data').upsert({ key:'devis', value: JSON.stringify(devisList) });
+      if(res.error) throw res.error;
+      setDevisStatus('Enregistré · ' + new Date().toLocaleTimeString('fr-FR'));
+    }catch(e){ setDevisStatus('Échec de l\'enregistrement : ' + (e.message || e), true); }
+  }
+
+  function renderDevis(){
+    var visible = devisList.filter(function(d){ return (d.club || 'Saint-Denis') === window.currentClub; });
+    listEl.innerHTML = '';
+    if(visible.length === 0){
+      var empty = document.createElement('div');
+      empty.className = 'devis-empty';
+      empty.textContent = 'Aucun devis pour ' + window.currentClub + ' pour le moment.';
+      listEl.appendChild(empty);
+      return;
+    }
+    visible.slice().reverse().forEach(function(d){
+      listEl.appendChild(buildDevisCard(d));
+    });
+  }
+
+  function buildDevisCard(d){
+    var card = document.createElement('div');
+    card.className = 'devis-card' + (d.status === 'signe' ? ' signe' : '');
+
+    var top = document.createElement('div');
+    top.className = 'devis-card-top';
+    var title = document.createElement('p');
+    title.className = 'devis-title';
+    title.textContent = d.title;
+    var status = document.createElement('span');
+    status.className = 'devis-status ' + (d.status === 'signe' ? 'signe' : 'a-valider');
+    status.textContent = d.status === 'signe' ? 'Signé' : 'À valider';
+    top.appendChild(title); top.appendChild(status);
+    card.appendChild(top);
+
+    var meta = document.createElement('div');
+    meta.className = 'devis-meta';
+    var clubTag = document.createElement('span'); clubTag.className = 'tag'; clubTag.textContent = d.club;
+    meta.appendChild(clubTag);
+    if(d.montant){ var mTag = document.createElement('span'); mTag.className = 'tag'; mTag.textContent = d.montant + ' €'; meta.appendChild(mTag); }
+    if(d.date){ var dTag = document.createElement('span'); dTag.className = 'tag'; dTag.textContent = fmtDateDevis(d.date); meta.appendChild(dTag); }
+    card.appendChild(meta);
+
+    if(d.description){
+      var desc = document.createElement('p');
+      desc.className = 'devis-desc';
+      desc.textContent = d.description;
+      card.appendChild(desc);
+    }
+
+    if(d.fileData){
+      var link = document.createElement('a');
+      link.className = 'devis-file-link';
+      link.href = d.fileData;
+      link.download = d.fileName || 'devis.pdf';
+      link.textContent = '📎 ' + (d.fileName || 'Voir le fichier joint');
+      card.appendChild(link);
+    }
+
+    if(d.status === 'signe'){
+      var info = document.createElement('p');
+      info.className = 'devis-signed-info';
+      info.innerHTML = 'Signé par <b>' + (d.signedBy || 'PDG').replace(/</g,'&lt;') + '</b> le ' + new Date(d.signedAt).toLocaleString('fr-FR');
+      card.appendChild(info);
+      if(d.signatureData){
+        var sigImg = document.createElement('img');
+        sigImg.className = 'devis-sig-preview';
+        sigImg.src = d.signatureData;
+        sigImg.alt = 'Signature';
+        card.appendChild(sigImg);
+      }
+    }
+
+    var actions = document.createElement('div');
+    actions.className = 'devis-actions';
+
+    if(d.status !== 'signe'){
+      var signBtn = document.createElement('button');
+      signBtn.className = 'sign-btn';
+      signBtn.textContent = 'Signer (PDG)';
+      signBtn.onclick = function(){ openSignatureModal(d); };
+      actions.appendChild(signBtn);
+    } else {
+      var dlBtn = document.createElement('a');
+      dlBtn.className = 'download-btn';
+      dlBtn.textContent = 'Télécharger le devis signé';
+      dlBtn.href = '#';
+      dlBtn.onclick = function(e){ e.preventDefault(); downloadSignedDevis(d); };
+      actions.appendChild(dlBtn);
+    }
+
+    var delBtn = document.createElement('button');
+    delBtn.className = 'delete-btn';
+    delBtn.textContent = 'Supprimer';
+    delBtn.onclick = function(){
+      if(confirm('Supprimer ce devis ?')){
+        devisList = devisList.filter(function(x){ return x.id !== d.id; });
+        renderDevis(); saveDevis();
+      }
+    };
+    actions.appendChild(delBtn);
+
+    card.appendChild(actions);
+    return card;
+  }
+
+  /* ---------- Signature ---------- */
+  function openSignatureModal(devis){
+    var overlay = document.createElement('div');
+    overlay.className = 'sig-overlay';
+    overlay.innerHTML =
+      '<div class="sig-modal">' +
+        '<h3>Signature du devis</h3>' +
+        '<p>« ' + devis.title.replace(/</g,'&lt;') + ' » — signature à la souris ou au doigt ci-dessous.</p>' +
+        '<div class="field"><label>Nom du signataire</label><input type="text" class="sig-name" value="PDG" maxlength="60"></div>' +
+        '<canvas class="sig-canvas" width="360" height="160"></canvas>' +
+        '<div class="sig-row">' +
+          '<button type="button" class="clear-sig">Effacer</button>' +
+          '<button type="button" class="cancel-sig">Annuler</button>' +
+          '<button type="button" class="primary confirm-sig">Valider la signature</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(overlay);
+
+    var canvas = overlay.querySelector('.sig-canvas');
+    var ctx = canvas.getContext('2d');
+    ctx.lineWidth = 2.4;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#111';
+    var drawing = false, hasDrawn = false;
+
+    function pos(e){
+      var rect = canvas.getBoundingClientRect();
+      var scaleX = canvas.width / rect.width;
+      var scaleY = canvas.height / rect.height;
+      var clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      var clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+    }
+    function start(e){ drawing = true; hasDrawn = true; var p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); e.preventDefault(); }
+    function move(e){ if(!drawing) return; var p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); }
+    function end(){ drawing = false; }
+
+    canvas.addEventListener('mousedown', start);
+    canvas.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', end);
+    canvas.addEventListener('touchstart', start);
+    canvas.addEventListener('touchmove', move);
+    canvas.addEventListener('touchend', end);
+
+    overlay.querySelector('.clear-sig').onclick = function(){
+      ctx.clearRect(0,0,canvas.width,canvas.height); hasDrawn = false;
+    };
+    overlay.querySelector('.cancel-sig').onclick = function(){ overlay.remove(); };
+    overlay.querySelector('.confirm-sig').onclick = function(){
+      if(!hasDrawn){ alert('Merci de signer avant de valider.'); return; }
+      var name = overlay.querySelector('.sig-name').value.trim() || 'PDG';
+      devis.status = 'signe';
+      devis.signedBy = name;
+      devis.signedAt = Date.now();
+      devis.signatureData = canvas.toDataURL('image/png');
+      overlay.remove();
+      renderDevis();
+      saveDevis();
+    };
+  }
+
+  function downloadSignedDevis(d){
+    var canvas = document.createElement('canvas');
+    canvas.width = 800; canvas.height = 600;
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle = '#111111';
+    ctx.font = 'bold 24px sans-serif';
+    ctx.fillText('DEVIS SIGNÉ — ON AIR FITNESS', 30, 50);
+    ctx.font = '16px sans-serif';
+    ctx.fillText('Club : ' + d.club, 30, 90);
+    ctx.fillText('Objet : ' + d.title, 30, 120);
+    if(d.montant) ctx.fillText('Montant : ' + d.montant + ' €', 30, 150);
+    ctx.fillText('Date du devis : ' + fmtDateDevis(d.date), 30, 180);
+    if(d.description){
+      ctx.font = '14px sans-serif';
+      wrapText(ctx, d.description, 30, 215, 740, 20);
+    }
+    ctx.font = '14px sans-serif';
+    ctx.fillText('Signé par ' + (d.signedBy || 'PDG') + ' le ' + new Date(d.signedAt).toLocaleString('fr-FR'), 30, 480);
+    if(d.signatureData){
+      var img = new Image();
+      img.onload = function(){
+        ctx.drawImage(img, 30, 500, 220, 80);
+        ctx.strokeStyle = '#ccc'; ctx.strokeRect(30, 500, 220, 80);
+        triggerDownload(canvas, d);
+      };
+      img.src = d.signatureData;
+    } else {
+      triggerDownload(canvas, d);
+    }
+  }
+
+  function wrapText(ctx, text, x, y, maxWidth, lineHeight){
+    var words = text.split(' ');
+    var line = '';
+    for(var n = 0; n < words.length; n++){
+      var testLine = line + words[n] + ' ';
+      if(ctx.measureText(testLine).width > maxWidth && n > 0){
+        ctx.fillText(line, x, y);
+        line = words[n] + ' ';
+        y += lineHeight;
+      } else { line = testLine; }
+    }
+    ctx.fillText(line, x, y);
+  }
+
+  function triggerDownload(canvas, d){
+    var a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = 'devis-signe-' + (d.title || 'devis').replace(/[^a-z0-9]+/gi,'-').toLowerCase() + '.png';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  }
+
+  /* ---------- Add form ---------- */
+  document.getElementById('addDevisBtn').addEventListener('click', function(){
+    var btn = document.getElementById('addDevisBtn');
+    if(document.querySelector('.devis-form')) return;
+    var form = document.createElement('div');
+    form.className = 'devis-form';
+    form.innerHTML =
+      '<div class="field"><label>Titre du devis</label><input type="text" class="fd-title" maxlength="120" placeholder="Ex: Remplacement tapis de course"></div>' +
+      '<div class="form-row">' +
+        '<div class="field"><label>Club</label><select class="fd-club">' +
+          '<option value="Saint-Denis"' + (window.currentClub==='Saint-Denis'?' selected':'') + '>Saint-Denis</option>' +
+          '<option value="Saint-Pierre"' + (window.currentClub==='Saint-Pierre'?' selected':'') + '>Saint-Pierre</option>' +
+        '</select></div>' +
+        '<div class="field"><label>Montant (€)</label><input type="number" class="fd-montant" min="0" step="0.01"></div>' +
+      '</div>' +
+      '<div class="field"><label>Date du devis</label><input type="date" class="fd-date"></div>' +
+      '<div class="field"><label>Description</label><textarea class="fd-desc" rows="2" maxlength="300"></textarea></div>' +
+      '<div class="field"><label>Fichier du devis (PDF ou image)</label><input type="file" accept="application/pdf,image/*" class="fd-file"></div>' +
+      '<div class="save-row">' +
+        '<button type="button" class="cancel">Annuler</button>' +
+        '<button type="button" class="primary confirm">Ajouter le devis</button>' +
+      '</div>';
+    btn.insertAdjacentElement('afterend', form);
+    form.querySelector('.fd-date').value = todayISODevis();
+    var fileData = '';
+    var fileName = '';
+    form.querySelector('.fd-file').addEventListener('change', function(e){
+      var file = e.target.files[0];
+      if(!file) return;
+      fileName = file.name;
+      var reader = new FileReader();
+      reader.onload = function(ev){ fileData = ev.target.result; };
+      reader.readAsDataURL(file);
+    });
+    form.querySelector('.cancel').onclick = function(){ form.remove(); };
+    form.querySelector('.confirm').onclick = function(){
+      var titleVal = form.querySelector('.fd-title').value.trim();
+      if(!titleVal){ form.querySelector('.fd-title').focus(); return; }
+      devisList.push({
+        id: uidDevis(),
+        title: titleVal,
+        club: form.querySelector('.fd-club').value,
+        montant: form.querySelector('.fd-montant').value,
+        date: form.querySelector('.fd-date').value || todayISODevis(),
+        description: form.querySelector('.fd-desc').value.trim(),
+        fileData: fileData, fileName: fileName,
+        status: 'a_valider',
+        signedBy: '', signedAt: null, signatureData: '',
+        createdAt: Date.now()
+      });
+      form.remove();
+      renderDevis();
+      saveDevis();
+    };
+  });
+
+  document.addEventListener('clubchange', function(){ renderDevis(); });
+
+  fetchDevis();
+  setInterval(fetchDevis, 20000);
 })();
 </script>
 
