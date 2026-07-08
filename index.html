@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>On Air Fitness — Saint-Denis</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap');
 
@@ -422,6 +423,20 @@
 
 <script>
 (function(){
+  /* ==================================================================
+     CONFIGURATION SUPABASE — À REMPLIR
+     Va sur https://supabase.com, crée un projet gratuit, puis dans
+     Project Settings > API, copie ton "Project URL" et ta clé "anon public".
+     ================================================================== */
+  var SUPABASE_URL = "https://xvvslembpejkpjmthxmx.supabase.co";
+  var SUPABASE_ANON_KEY = "sb_publishable_jl-LXXNgdzFMXgnfR0r38g_K0JIDJ8z";
+  var supabaseReady = SUPABASE_URL.indexOf('YOUR_') !== 0;
+  var sb = null;
+  if(supabaseReady){
+    sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+  /* ================================================================== */
+
   var STATUSES = ['todo','doing','done'];
   var ESPACES = ['Cardio','Musculation','Cours collectifs','Vestiaires','Accueil','Extérieur','Administratif','Autre'];
   var URG_LABELS = { haute:'Urgent', moyenne:'Moyenne', basse:'Faible' };
@@ -470,56 +485,76 @@
     statusMsg.style.color = isError ? 'var(--late)' : 'var(--muted)';
   }
 
-  async function loadData(){
-    var loaded = false;
+  function normalizeTask(t){
+    if(!t.assignees) t.assignees = t.assignee ? [t.assignee] : [];
+    if(!t.recurrence) t.recurrence = 'none';
+    if(!t.history) t.history = [];
+    if(t.photo === undefined) t.photo = '';
+    if(t.lastReminderSent === undefined) t.lastReminderSent = '';
+  }
+
+  function formOpen(){
+    return !!document.querySelector('.task-form');
+  }
+
+  async function fetchRemoteData(isInitial){
+    if(!supabaseReady) return;
     try{
-      var res = await window.storage.get('oaf-reunion-tasks-v3', true);
-      if(res && res.value){ tasks = JSON.parse(res.value); loaded = true; }
-    }catch(e){}
-    if(!loaded){
-      try{
-        var old = await window.storage.get('oaf-reunion-tasks-v2', true);
-        if(old && old.value){
-          var oldTasks = JSON.parse(old.value);
-          tasks = oldTasks.map(function(t){
-            return Object.assign({}, t, {
-              assignees: t.assignee ? [t.assignee] : [],
-              recurrence: 'none', photo: '', lastReminderSent: '',
-              history: [{ ts: t.createdAt || Date.now(), text: 'Tâche migrée depuis la version précédente' }]
-            });
-          });
-          await saveTasks();
+      var res = await sb.from('app_data').select('key, value').in('key', ['tasks','clubName']);
+      if(res.error) throw res.error;
+      var rows = res.data || [];
+      var tasksRow = rows.find(function(r){ return r.key === 'tasks'; });
+      var nameRow = rows.find(function(r){ return r.key === 'clubName'; });
+
+      if(nameRow && nameRow.value){
+        clubName = nameRow.value;
+        document.getElementById('clubName').value = clubName;
+      }
+
+      if(!formOpen()){
+        if(tasksRow && tasksRow.value){
+          try{ tasks = JSON.parse(tasksRow.value); }catch(e){ tasks = []; }
+        } else if(isInitial){
+          tasks = [];
         }
-      }catch(e){ tasks = []; }
+        tasks.forEach(normalizeTask);
+        refreshFilterOptions();
+        render();
+      }
+      setStatusMsg('Synchronisé avec toute l\'équipe · ' + new Date().toLocaleTimeString('fr-FR'));
+    }catch(e){
+      setStatusMsg('Connexion à Supabase impossible : ' + (e.message || e), true);
     }
-    tasks.forEach(function(t){
-      if(!t.assignees) t.assignees = t.assignee ? [t.assignee] : [];
-      if(!t.recurrence) t.recurrence = 'none';
-      if(!t.history) t.history = [];
-      if(t.photo === undefined) t.photo = '';
-      if(t.lastReminderSent === undefined) t.lastReminderSent = '';
-    });
-    try{
-      var nameRes = await window.storage.get('oaf-reunion-name', true);
-      if(nameRes && nameRes.value) clubName = nameRes.value;
-    }catch(e){}
-    document.getElementById('clubName').value = clubName;
-    refreshFilterOptions();
-    render();
-    setStatusMsg('Données partagées avec toute l\'équipe. Dernière synchro : ' + new Date().toLocaleTimeString('fr-FR'));
+  }
+
+  function loadData(){
+    if(!supabaseReady){
+      setStatusMsg('Configuration Supabase manquante — ouvre le fichier HTML et remplis SUPABASE_URL / SUPABASE_ANON_KEY en haut du script.', true);
+      refreshFilterOptions();
+      render();
+      return;
+    }
+    fetchRemoteData(true);
+    setInterval(function(){ fetchRemoteData(false); }, 20000);
     updateReminderStatus();
     setTimeout(checkReminders, 2000);
     setInterval(checkReminders, 30*60*1000);
   }
 
   async function saveTasks(){
+    if(!supabaseReady) return;
     try{
-      await window.storage.set('oaf-reunion-tasks-v3', JSON.stringify(tasks), true);
+      var res = await sb.from('app_data').upsert({ key: 'tasks', value: JSON.stringify(tasks) });
+      if(res.error) throw res.error;
       setStatusMsg('Enregistré · ' + new Date().toLocaleTimeString('fr-FR'));
-    }catch(e){ setStatusMsg('Échec de l\'enregistrement, réessaie.', true); }
+    }catch(e){ setStatusMsg('Échec de l\'enregistrement : ' + (e.message || e), true); }
   }
   async function saveClubName(){
-    try{ await window.storage.set('oaf-reunion-name', clubName, true); }catch(e){}
+    if(!supabaseReady) return;
+    try{
+      var res = await sb.from('app_data').upsert({ key: 'clubName', value: clubName });
+      if(res.error) throw res.error;
+    }catch(e){}
   }
 
   function refreshFilterOptions(){
